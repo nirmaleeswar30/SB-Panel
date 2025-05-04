@@ -135,9 +135,11 @@ def register():
             if User.query.count() == 0:
                 user.role = 'admin'
             
+            # Add user to the session and commit to get the user.id
             db.session.add(user)
+            db.session.commit()
             
-            # Log activity
+            # Now that the user has an ID, log the activity
             log = ActivityLog(
                 user_id=user.id,
                 action="User Registration",
@@ -145,7 +147,6 @@ def register():
                 ip_address=request.remote_addr
             )
             db.session.add(log)
-            
             db.session.commit()
             
             flash('Registration successful! You can now login.', 'success')
