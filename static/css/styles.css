@@ -1,0 +1,295 @@
+/**
+ * SBPanel - Custom Styles
+ */
+
+/* Layout styles */
+body {
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+.sidebar {
+    min-width: 250px;
+    max-width: 250px;
+    transition: all 0.3s;
+    z-index: 1000;
+    height: 100vh;
+}
+
+.sidebar.collapsed {
+    margin-left: -250px;
+}
+
+.sidebar .nav-link {
+    color: rgba(255, 255, 255, 0.6);
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    margin: 2px 0;
+}
+
+.sidebar .nav-link:hover {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar .nav-link.active {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.sidebar .nav-link i {
+    margin-right: 10px;
+}
+
+.content {
+    width: 100%;
+    transition: all 0.3s;
+}
+
+.page-header {
+    padding: 1.5rem 0;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.page-title {
+    margin-bottom: 0;
+}
+
+/* Dashboard cards */
+.dashboard-card {
+    height: 100%;
+    transition: transform 0.2s;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+}
+
+.dashboard-card .card-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+/* Resource usage charts */
+.resource-chart-container {
+    position: relative;
+    height: 160px;
+}
+
+.resource-chart-center-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+/* Card hover effects */
+.card {
+    transition: box-shadow 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Status badges */
+.status-badge {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 5px;
+}
+
+.status-running {
+    background-color: #20c997;
+}
+
+.status-stopped {
+    background-color: #dc3545;
+}
+
+.status-error {
+    background-color: #fd7e14;
+}
+
+/* Progress bars */
+.progress {
+    height: 0.6rem;
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+/* Custom form control styles */
+.form-control:focus, .form-select:focus {
+    border-color: rgba(32, 201, 151, 0.5);
+    box-shadow: 0 0 0 0.2rem rgba(32, 201, 151, 0.25);
+}
+
+/* File browser styles */
+.file-browser {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.file-browser-header {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.75rem 1rem;
+}
+
+.file-browser-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.file-browser-item:last-child {
+    border-bottom: none;
+}
+
+.file-browser-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.file-browser-item .file-icon {
+    margin-right: 10px;
+    font-size: 1.2rem;
+}
+
+/* File editor styles */
+.file-editor-header {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.75rem 1rem;
+    border-radius: 4px 4px 0 0;
+}
+
+/* Responsive sidebar */
+@media (max-width: 768px) {
+    .sidebar {
+        margin-left: -250px;
+    }
+    
+    .sidebar.active {
+        margin-left: 0;
+    }
+    
+    .sidebar-collapsed .sidebar {
+        margin-left: 0;
+    }
+}
+
+/* Dropdown item form (for file actions) */
+.dropdown-item-form {
+    margin: 0;
+}
+
+.dropdown-item-form .dropdown-item {
+    border: none;
+    background: none;
+    text-align: left;
+    width: 100%;
+    padding: 0.25rem 1.5rem;
+}
+
+.dropdown-item-form .dropdown-item:hover {
+    background-color: rgba(32, 201, 151, 0.1);
+}
+
+/* Toggle switches */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-switch .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.toggle-switch .slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+.toggle-switch input:checked + .slider {
+    background-color: #20c997;
+}
+
+.toggle-switch input:focus + .slider {
+    box-shadow: 0 0 1px #20c997;
+}
+
+.toggle-switch input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+/* Support for dark mode CodeMirror */
+.CodeMirror {
+    height: auto;
+    border-radius: 0 0 4px 4px;
+}
+
+/* Login page styles */
+.login-container {
+    max-width: 400px;
+    margin: 0 auto;
+    padding-top: 100px;
+}
+
+.login-logo {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.login-logo h1 {
+    font-size: 2.5rem;
+    font-weight: 600;
+}
+
+.login-card {
+    border-radius: 8px;
+}
+
+/* Loading animation */
+.loading-spinner {
+    display: inline-block;
+    width: 2rem;
+    height: 2rem;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

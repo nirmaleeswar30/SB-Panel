@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Register{% endblock %}
+
+{% block auth_content %}
+<div class="login-container">
+    <div class="login-logo">
+        <h1 class="text-primary">SBPanel</h1>
+        <p class="text-muted">Web Hosting Control Panel</p>
+    </div>
+    
+    <div class="card login-card shadow-sm">
+        <div class="card-body p-4">
+            <h4 class="card-title text-center mb-4">Create an Account</h4>
+            
+            <form action="{{ url_for('auth.register') }}" method="post">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                        <input type="text" class="form-control" id="username" name="username" required autofocus>
+                    </div>
+                    <small class="text-muted">Username must be unique and contain only letters, numbers, and underscores.</small>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email Address</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <small class="text-muted">Password must be at least 8 characters long.</small>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="confirm_password" class="form-label">Confirm Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary">Register</button>
+                </div>
+            </form>
+        </div>
+        <div class="card-footer text-center py-3">
+            <div class="text-muted">Already have an account?</div>
+            <a href="{{ url_for('auth.login') }}" class="btn btn-link">Login instead</a>
+        </div>
+    </div>
+    
+    <div class="text-center mt-4 text-muted">
+        <small>&copy; 2023 SBPanel. All rights reserved.</small>
+    </div>
+</div>
+{% endblock %}

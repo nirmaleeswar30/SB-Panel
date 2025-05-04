@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block head %}
+<meta http-equiv="refresh" content="300">
+{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h1 class="page-title">Dashboard</h1>
+    <div>
+        <span class="badge bg-info">Last update: {{ datetime.now().strftime('%H:%M:%S') }}</span>
+    </div>
+</div>
+
+<!-- Resource Usage -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">CPU Usage</h5>
+                <div class="resource-chart-container">
+                    <canvas id="cpuUsageChart" data-value="{{ resources.cpu.used }}" data-limit="{{ resources.cpu.limit }}"></canvas>
+                    <div id="cpuCenterText" class="resource-chart-center-text">
+                        {{ ((resources.cpu.used / resources.cpu.limit) * 100) | round(1) }}%
+                    </div>
+                </div>
+                <div class="text-center mt-2">
+                    <small class="text-muted">{{ resources.cpu.used }} of {{ resources.cpu.limit }} cores</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Memory Usage</h5>
+                <div class="resource-chart-container">
+                    <canvas id="memoryUsageChart" data-value="{{ resources.memory.used }}" data-limit="{{ resources.memory.limit }}"></canvas>
+                    <div id="memoryCenterText" class="resource-chart-center-text">
+                        {{ ((resources.memory.used / resources.memory.limit) * 100) | round(1) }}%
+                    </div>
+                </div>
+                <div class="text-center mt-2">
+                    <small class="text-muted">{{ (resources.memory.used)|filesizeformat }} of {{ (resources.memory.limit)|filesizeformat }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Disk Usage</h5>
+                <div class="resource-chart-container">
+                    <canvas id="diskUsageChart" data-value="{{ resources.disk.used }}" data-limit="{{ resources.disk.limit }}"></canvas>
+                    <div id="diskCenterText" class="resource-chart-center-text">
+                        {{ ((resources.disk.used / resources.disk.limit) * 100) | round(1) }}%
+                    </div>
+                </div>
+                <div class="text-center mt-2">
+                    <small class="text-muted">{{ (resources.disk.used)|filesizeformat }} of {{ (resources.disk.limit)|filesizeformat }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card dashboard-card bg-primary bg-opacity-25 text-center">
+            <div class="card-body">
+                <div class="card-icon text-primary">
+                    <i class="fas fa-box"></i>
+                </div>
+                <h5 class="card-title">Containers</h5>
+                <h2 class="mb-0">{{ containers|length }}</h2>
+                <div class="mt-3">
+                    <a href="{{ url_for('containers.index') }}" class="btn btn-sm btn-outline-primary">Manage</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card dashboard-card bg-success bg-opacity-25 text-center">
+            <div class="card-body">
+                <div class="card-icon text-success">
+                    <i class="fas fa-globe"></i>
+                </div>
+                <h5 class="card-title">Websites</h5>
+                <h2 class="mb-0">{{ website_count }}</h2>
+                <div class="mt-3">
+                    <a href="{{ url_for('websites.index') }}" class="btn btn-sm btn-outline-success">Manage</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card dashboard-card bg-info bg-opacity-25 text-center">
+            <div class="card-body">
+                <div class="card-icon text-info">
+                    <i class="fas fa-database"></i>
+                </div>
+                <h5 class="card-title">Databases</h5>
+                <h2 class="mb-0">{{ database_count }}</h2>
+                <div class="mt-3">
+                    <a href="{{ url_for('databases.index') }}" class="btn btn-sm btn-outline-info">Manage</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card dashboard-card bg-warning bg-opacity-25 text-center">
+            <div class="card-body">
+                <div class="card-icon text-warning">
+                    <i class="fas fa-cogs"></i>
+                </div>
+                <h5 class="card-title">Services</h5>
+                <h2 class="mb-0">{{ service_count }}</h2>
+                <div class="mt-3">
+                    <a href="{{ url_for('services.index') }}" class="btn btn-sm btn-outline-warning">Manage</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Containers Status -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Containers Status</h5>
+                <a href="{{ url_for('containers.index') }}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Template</th>
+                                <th>Status</th>
+                                <th>CPU</th>
+                                <th>Memory</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for container in containers %}
+                            <tr data-container-id="{{ container.id }}">
+                                <td>{{ container.name }}</td>
+                                <td>{{ container.template }}</td>
+                                <td>
+                                    <span id="container-status-{{ container.id }}" class="badge {% if container.status == 'running' %}bg-success{% elif container.status == 'stopped' %}bg-danger{% else %}bg-warning{% endif %}">
+                                        {{ container.status }}
+                                    </span>
+                                </td>
+                                <td id="container-cpu-{{ container.id }}">0%</td>
+                                <td id="container-memory-{{ container.id }}">0 MB</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <form action="{{ url_for('containers.start', container_id=container.id) }}" method="post" class="d-inline">
+                                            <button type="submit" class="btn btn-outline-success {% if container.status == 'running' %}disabled{% endif %}" title="Start Container">
+                                                <i class="fas fa-play"></i>
+                                            </button>
+                                        </form>
+                                        <form action="{{ url_for('containers.stop', container_id=container.id) }}" method="post" class="d-inline">
+                                            <button type="submit" class="btn btn-outline-danger {% if container.status == 'stopped' %}disabled{% endif %}" title="Stop Container">
+                                                <i class="fas fa-stop"></i>
+                                            </button>
+                                        </form>
+                                        <form action="{{ url_for('containers.restart', container_id=container.id) }}" method="post" class="d-inline">
+                                            <button type="submit" class="btn btn-outline-warning {% if container.status == 'stopped' %}disabled{% endif %}" title="Restart Container">
+                                                <i class="fas fa-sync"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="fas fa-box fa-2x mb-3"></i>
+                                        <p>No containers found.</p>
+                                        <a href="{{ url_for('containers.index') }}" class="btn btn-sm btn-primary">Create Container</a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recent Activity</h5>
+                {% if current_user.role == 'admin' %}
+                <a href="{{ url_for('admin.logs') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                {% endif %}
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Action</th>
+                                <th>Details</th>
+                                <th>IP Address</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in recent_logs %}
+                            <tr>
+                                <td title="{{ log.created_at }}">{{ log.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>{{ log.action }}</td>
+                                <td>{{ log.details }}</td>
+                                <td>{{ log.ip_address }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="fas fa-list fa-2x mb-3"></i>
+                                        <p>No activity logs found.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/dashboard.js"></script>
+{% endblock %}

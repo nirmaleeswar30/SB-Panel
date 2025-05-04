@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+
+{% block title %}File Manager{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h1 class="page-title">File Manager</h1>
+    <div>
+        <button class="btn btn-outline-primary me-2" onclick="showMkdirModal()">
+            <i class="fas fa-folder-plus"></i> New Folder
+        </button>
+        <button class="btn btn-outline-success me-2" data-bs-toggle="modal" data-bs-target="#uploadFileModal">
+            <i class="fas fa-upload"></i> Upload
+        </button>
+        <button class="btn btn-outline-info" onclick="showUrlDownloadModal()">
+            <i class="fas fa-download"></i> Download from URL
+        </button>
+    </div>
+</div>
+
+<!-- Container Selection and Location Bar -->
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-3 align-items-center">
+            <div class="col-md-4">
+                <label for="containerSelect" class="form-label">Container</label>
+                <select class="form-select" id="containerSelect">
+                    <option value="">Select a container</option>
+                    {% for container in containers %}
+                        <option value="{{ container.id }}" {% if container_id == container.id %}selected{% endif %}>
+                            {{ container.name }} ({{ container.template }})
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-8">
+                <label class="form-label">Current Path</label>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item">
+                            <a href="#" data-path="/" class="breadcrumb-item-link">Root</a>
+                        </li>
+                        {% set path_parts = current_dir.split('/') %}
+                        {% set current_path = '' %}
+                        {% for part in path_parts %}
+                            {% if part %}
+                                {% set current_path = current_path + '/' + part %}
+                                <li class="breadcrumb-item">
+                                    <a href="#" data-path="{{ current_path }}" class="breadcrumb-item-link">
+                                        {{ part }}
+                                    </a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- File Browser -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Files and Directories</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="file-browser">
+            <div class="file-browser-header">
+                <div class="row">
+                    <div class="col-6">Name</div>
+                    <div class="col-2">Size</div>
+                    <div class="col-2">Modified</div>
+                    <div class="col-2">Actions</div>
+                </div>
+            </div>
+            
+            {% if container_id %}
+                <!-- Go up directory if not at root -->
+                {% if current_dir != '/' %}
+                    {% set parent_dir = current_dir.rsplit('/', 1)[0] %}
+                    {% if parent_dir == '' %}{% set parent_dir = '/' %}{% endif %}
+                    <div class="file-browser-item">
+                        <div class="row align-items-center">
+                            <div class="col-6">
+                                <a href="#" class="dir-link" data-path="{{ parent_dir }}">
+                                    <i class="fas fa-level-up-alt file-icon"></i> ..
+                                </a>
+                            </div>
+                            <div class="col-2"></div>
+                            <div class="col-2"></div>
+                            <div class="col-2"></div>
+                        </div>
+                    </div>
+                {% endif %}
+                
+                <!-- List directories first, then files -->
+                {% for file in files %}
+                    {% if file.is_dir %}
+                        <div class="file-browser-item">
+                            <div class="row align-items-center">
+                                <div class="col-6">
+                                    <a href="#" class="dir-link" data-path="{{ file.path }}">
+                                        <i class="fas fa-folder file-icon text-warning"></i> {{ file.name }}
+                                    </a>
+                                </div>
+                                <div class="col-2">
+                                    {{ file.size }}
+                                </div>
+                                <div class="col-2">
+                                    {{ file.date }}
+                                </div>
+                                <div class="col-2">
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="showFileActions(this, '{{ file.path }}', '{{ file.name }}', true)">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                
+                {% for file in files %}
+                    {% if not file.is_dir %}
+                        <div class="file-browser-item">
+                            <div class="row align-items-center">
+                                <div class="col-6">
+                                    <i class="fas fa-file file-icon text-muted"></i> {{ file.name }}
+                                </div>
+                                <div class="col-2">
+                                    {{ file.size }}
+                                </div>
+                                <div class="col-2">
+                                    {{ file.date }}
+                                </div>
+                                <div class="col-2">
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="showFileActions(this, '{{ file.path }}', '{{ file.name }}', false)">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if files|length == 0 %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-folder-open fa-3x mb-3 text-muted"></i>
+                        <p class="text-muted">This directory is empty.</p>
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-server fa-3x mb-3 text-muted"></i>
+                    <p class="text-muted">Please select a container to browse files.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Upload File Modal -->
+<div class="modal fade" id="uploadFileModal" tabindex="-1" aria-labelledby="uploadFileModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadFileModalLabel">Upload File</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="fileUploadForm" action="{{ url_for('files.upload') }}" method="post" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <input type="hidden" name="container_id" value="{{ container_id }}">
+                    <input type="hidden" name="current_dir" value="{{ current_dir }}">
+                    
+                    <div class="mb-3">
+                        <label for="fileInput" class="form-label">Select File</label>
+                        <div class="input-group">
+                            <input type="file" class="form-control" id="fileInput" name="file" required>
+                        </div>
+                    </div>
+                    
+                    <div id="uploadProgressContainer" style="display: none;">
+                        <label class="form-label">Upload Progress</label>
+                        <div class="progress">
+                            <div id="uploadProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Create Directory Modal -->
+<div class="modal fade" id="mkdirModal" tabindex="-1" aria-labelledby="mkdirModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="mkdirModalLabel">Create New Folder</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="mkdirForm" action="{{ url_for('files.mkdir') }}" method="post">
+                <div class="modal-body">
+                    <input type="hidden" name="container_id" value="{{ container_id }}">
+                    <input type="hidden" name="current_dir" value="{{ current_dir }}">
+                    
+                    <div class="mb-3">
+                        <label for="dir_name" class="form-label">Folder Name</label>
+                        <input type="text" class="form-control" id="dir_name" name="dir_name" required>
+                        <div class="invalid-feedback">Please enter a valid folder name.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Folder</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- URL Download Modal -->
+<div class="modal fade" id="urlDownloadModal" tabindex="-1" aria-labelledby="urlDownloadModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="urlDownloadModalLabel">Download from URL</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="urlDownloadForm" action="{{ url_for('files.download_url') }}" method="post">
+                <div class="modal-body">
+                    <input type="hidden" name="container_id" value="{{ container_id }}">
+                    <input type="hidden" name="current_dir" value="{{ current_dir }}">
+                    
+                    <div class="mb-3">
+                        <label for="url" class="form-label">URL to Download</label>
+                        <input type="url" class="form-control" id="url" name="url" required placeholder="https://example.com/file.zip">
+                        <div class="invalid-feedback">Please enter a valid URL.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Download</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/files.js"></script>
+{% endblock %}

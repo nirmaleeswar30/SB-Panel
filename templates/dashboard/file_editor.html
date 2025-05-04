@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Edit File{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1 class="page-title">File Editor</h1>
+        <p class="text-muted">{{ file_path }}</p>
+    </div>
+    <div>
+        <a href="{{ url_for('files.index', container_id=container.id, path=file_path|dirname) }}" class="btn btn-outline-secondary me-2">
+            <i class="fas fa-arrow-left"></i> Back to Files
+        </a>
+        <button id="saveFileButton" class="btn btn-primary">
+            <i class="fas fa-save"></i> Save
+        </button>
+    </div>
+</div>
+
+<!-- File Editor -->
+<div class="card">
+    <div class="file-editor-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <strong>Container:</strong> {{ container.name }}
+            </div>
+            <div>
+                <strong>Path:</strong> {{ file_path }}
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <form id="editFileForm" action="{{ url_for('files.edit') }}" method="post">
+            <input type="hidden" name="container_id" value="{{ container.id }}">
+            <input type="hidden" name="file_path" value="{{ file_path }}">
+            <textarea id="codeEditor" name="content" data-file-path="{{ file_path }}">{{ content }}</textarea>
+        </form>
+    </div>
+</div>
+
+<!-- Editor Help Card -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">Editor Keyboard Shortcuts</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <ul class="mb-0">
+                    <li><strong>Ctrl/Cmd + S:</strong> Save file</li>
+                    <li><strong>Ctrl/Cmd + F:</strong> Find</li>
+                    <li><strong>Ctrl/Cmd + G:</strong> Find next</li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <ul class="mb-0">
+                    <li><strong>Ctrl/Cmd + Z:</strong> Undo</li>
+                    <li><strong>Ctrl/Cmd + Y:</strong> Redo</li>
+                    <li><strong>Ctrl/Cmd + /:</strong> Toggle comment</li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <ul class="mb-0">
+                    <li><strong>Tab:</strong> Indent</li>
+                    <li><strong>Shift + Tab:</strong> Outdent</li>
+                    <li><strong>Ctrl/Cmd + Home/End:</strong> Go to start/end</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/codemirror-init.js"></script>
+<script>
+    // Add save keyboard shortcut
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            e.preventDefault();
+            document.getElementById('saveFileButton').click();
+        }
+    });
+</script>
+{% endblock %}

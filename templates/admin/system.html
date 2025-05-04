@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}System Settings{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">System Settings</h1>
+</div>
+
+<!-- System Settings Form -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Configure System Settings</h5>
+    </div>
+    <div class="card-body">
+        <form action="{{ url_for('admin.update_system') }}" method="post">
+            <div class="row">
+                <!-- General Settings -->
+                <div class="col-md-6">
+                    <h5 class="mb-3">General Settings</h5>
+                    
+                    <div class="mb-3">
+                        <label for="setting_system_name" class="form-label">System Name</label>
+                        <input type="text" class="form-control" id="setting_system_name" name="setting_system_name" 
+                            value="{{ settings|selectattr('key', 'equalto', 'system_name')|map(attribute='value')|first|default('SBPanel') }}">
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="setting_allow_registration" name="setting_allow_registration" 
+                            value="true" {% if settings|selectattr('key', 'equalto', 'allow_registration')|map(attribute='value')|first|default('true') == 'true' %}checked{% endif %}>
+                        <label class="form-check-label" for="setting_allow_registration">Allow User Registration</label>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="setting_maintenance_mode" name="setting_maintenance_mode" 
+                            value="true" {% if settings|selectattr('key', 'equalto', 'maintenance_mode')|map(attribute='value')|first|default('false') == 'true' %}checked{% endif %}>
+                        <label class="form-check-label" for="setting_maintenance_mode">Maintenance Mode</label>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="setting_admin_email" class="form-label">Administrator Email</label>
+                        <input type="email" class="form-control" id="setting_admin_email" name="setting_admin_email" 
+                            value="{{ settings|selectattr('key', 'equalto', 'admin_email')|map(attribute='value')|first|default('') }}">
+                    </div>
+                </div>
+                
+                <!-- Resource Settings -->
+                <div class="col-md-6">
+                    <h5 class="mb-3">Default Resource Limits</h5>
+                    
+                    <div class="mb-3">
+                        <label for="setting_default_cpu_limit" class="form-label">Default CPU Cores</label>
+                        <input type="number" class="form-control" id="setting_default_cpu_limit" name="setting_default_cpu_limit" 
+                            value="{{ settings|selectattr('key', 'equalto', 'default_cpu_limit')|map(attribute='value')|first|default('1') }}" min="1">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="setting_default_memory_limit" class="form-label">Default Memory (MB)</label>
+                        <input type="number" class="form-control" id="setting_default_memory_limit" name="setting_default_memory_limit" 
+                            value="{{ settings|selectattr('key', 'equalto', 'default_memory_limit')|map(attribute='value')|first|default('1024') }}" min="512" step="256">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="setting_default_disk_limit" class="form-label">Default Disk (MB)</label>
+                        <input type="number" class="form-control" id="setting_default_disk_limit" name="setting_default_disk_limit" 
+                            value="{{ settings|selectattr('key', 'equalto', 'default_disk_limit')|map(attribute='value')|first|default('10240') }}" min="1024" step="1024">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="setting_max_containers" class="form-label">Maximum Containers per User</label>
+                        <input type="number" class="form-control" id="setting_max_containers" name="setting_max_containers" 
+                            value="{{ settings|selectattr('key', 'equalto', 'max_containers')|map(attribute='value')|first|default('5') }}" min="1">
+                    </div>
+                </div>
+                
+                <hr class="my-4">
+                
+                <!-- SSL Settings -->
+                <div class="col-md-6">
+                    <h5 class="mb-3">SSL Settings</h5>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="setting_ssl_auto_renew" name="setting_ssl_auto_renew" 
+                            value="true" {% if settings|selectattr('key', 'equalto', 'ssl_auto_renew')|map(attribute='value')|first|default('true') == 'true' %}checked{% endif %}>
+                        <label class="form-check-label" for="setting_ssl_auto_renew">Automatically Renew SSL Certificates</label>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="setting_ssl_email" class="form-label">SSL Certificate Email</label>
+                        <input type="email" class="form-control" id="setting_ssl_email" name="setting_ssl_email" 
+                            value="{{ settings|selectattr('key', 'equalto', 'ssl_email')|map(attribute='value')|first|default('') }}">
+                        <small class="text-muted">Used for Let's Encrypt notifications</small>
+                    </div>
+                </div>
+                
+                <!-- Backup Settings -->
+                <div class="col-md-6">
+                    <h5 class="mb-3">Backup Settings</h5>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="setting_auto_backup" name="setting_auto_backup" 
+                            value="true" {% if settings|selectattr('key', 'equalto', 'auto_backup')|map(attribute='value')|first|default('false') == 'true' %}checked{% endif %}>
+                        <label class="form-check-label" for="setting_auto_backup">Enable Automatic Backups</label>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="setting_backup_frequency" class="form-label">Backup Frequency</label>
+                        <select class="form-select" id="setting_backup_frequency" name="setting_backup_frequency">
+                            <option value="daily" {% if settings|selectattr('key', 'equalto', 'backup_frequency')|map(attribute='value')|first|default('weekly') == 'daily' %}selected{% endif %}>Daily</option>
+                            <option value="weekly" {% if settings|selectattr('key', 'equalto', 'backup_frequency')|map(attribute='value')|first|default('weekly') == 'weekly' %}selected{% endif %}>Weekly</option>
+                            <option value="monthly" {% if settings|selectattr('key', 'equalto', 'backup_frequency')|map(attribute='value')|first|default('weekly') == 'monthly' %}selected{% endif %}>Monthly</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="setting_backup_retention" class="form-label">Backup Retention (Days)</label>
+                        <input type="number" class="form-control" id="setting_backup_retention" name="setting_backup_retention" 
+                            value="{{ settings|selectattr('key', 'equalto', 'backup_retention')|map(attribute='value')|first|default('30') }}" min="1">
+                    </div>
+                </div>
+                
+                <hr class="my-4">
+                
+                <!-- Custom Messages -->
+                <div class="col-12">
+                    <h5 class="mb-3">System Messages</h5>
+                    
+                    <div class="mb-3">
+                        <label for="setting_login_message" class="form-label">Login Page Message</label>
+                        <textarea class="form-control" id="setting_login_message" name="setting_login_message" rows="3">{{ settings|selectattr('key', 'equalto', 'login_message')|map(attribute='value')|first|default('') }}</textarea>
+                        <small class="text-muted">This message will be displayed on the login page</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="setting_dashboard_message" class="form-label">Dashboard Message</label>
+                        <textarea class="form-control" id="setting_dashboard_message" name="setting_dashboard_message" rows="3">{{ settings|selectattr('key', 'equalto', 'dashboard_message')|map(attribute='value')|first|default('') }}</textarea>
+                        <small class="text-muted">This message will be displayed to all users on the dashboard</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-end mt-4">
+                <button type="submit" class="btn btn-primary">Save Settings</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Settings Information Card -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">System Information</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <table class="table">
+                    <tr>
+                        <th>System Version</th>
+                        <td>SBPanel 1.0</td>
+                    </tr>
+                    <tr>
+                        <th>Operating System</th>
+                        <td>{{ settings|selectattr('key', 'equalto', 'os_version')|map(attribute='value')|first|default('Linux') }}</td>
+                    </tr>
+                    <tr>
+                        <th>Python Version</th>
+                        <td>{{ settings|selectattr('key', 'equalto', 'python_version')|map(attribute='value')|first|default('3.x') }}</td>
+                    </tr>
+                    <tr>
+                        <th>LXD Version</th>
+                        <td>{{ settings|selectattr('key', 'equalto', 'lxd_version')|map(attribute='value')|first|default('4.x') }}</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <table class="table">
+                    <tr>
+                        <th>Total Users</th>
+                        <td>{{ settings|selectattr('key', 'equalto', 'total_users')|map(attribute='value')|first|default('0') }}</td>
+                    </tr>
+                    <tr>
+                        <th>Total Containers</th>
+                        <td>{{ settings|selectattr('key', 'equalto', 'total_containers')|map(attribute='value')|first|default('0') }}</td>
+                    </tr>
+                    <tr>
+                        <th>Total Websites</th>
+                        <td>{{ settings|selectattr('key', 'equalto', 'total_websites')|map(attribute='value')|first|default('0') }}</td>
+                    </tr>
+                    <tr>
+                        <th>Total Databases</th>
+                        <td>{{ settings|selectattr('key', 'equalto', 'total_databases')|map(attribute='value')|first|default('0') }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

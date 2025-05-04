@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}Activity Logs{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h1 class="page-title">Activity Logs</h1>
+    <form action="{{ url_for('admin.clear_logs') }}" method="post" class="d-inline">
+        <button type="submit" class="btn btn-danger" data-confirm="Are you sure you want to clear all logs? This action cannot be undone.">
+            <i class="fas fa-trash"></i> Clear Logs
+        </button>
+    </form>
+</div>
+
+<!-- Log Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" action="{{ url_for('admin.logs') }}">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label for="user_filter" class="form-label">User</label>
+                    <select class="form-select" id="user_filter" name="user">
+                        <option value="">All Users</option>
+                        {% for user in users %}
+                            <option value="{{ user.id }}" {% if request.args.get('user') == user.id|string %}selected{% endif %}>{{ user.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="action_filter" class="form-label">Action</label>
+                    <select class="form-select" id="action_filter" name="action">
+                        <option value="">All Actions</option>
+                        <option value="login" {% if request.args.get('action') == 'login' %}selected{% endif %}>Login</option>
+                        <option value="logout" {% if request.args.get('action') == 'logout' %}selected{% endif %}>Logout</option>
+                        <option value="create" {% if request.args.get('action') == 'create' %}selected{% endif %}>Create</option>
+                        <option value="update" {% if request.args.get('action') == 'update' %}selected{% endif %}>Update</option>
+                        <option value="delete" {% if request.args.get('action') == 'delete' %}selected{% endif %}>Delete</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="date_from" class="form-label">From Date</label>
+                    <input type="date" class="form-control" id="date_from" name="date_from" value="{{ request.args.get('date_from', '') }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="date_to" class="form-label">To Date</label>
+                    <input type="date" class="form-control" id="date_to" name="date_to" value="{{ request.args.get('date_to', '') }}">
+                </div>
+            </div>
+            <div class="d-flex justify-content-end mt-3">
+                <button type="submit" class="btn btn-primary">Filter Logs</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Logs Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">System Activity Logs</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Details</th>
+                        <th>IP Address</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs.items %}
+                    <tr>
+                        <td title="{{ log.created_at }}">{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td>
+                            {% for user in users %}
+                                {% if user.id == log.user_id %}
+                                    {{ user.username }}
+                                {% endif %}
+                            {% endfor %}
+                        </td>
+                        <td>{{ log.action }}</td>
+                        <td>{{ log.details }}</td>
+                        <td>{{ log.ip_address }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center py-4">
+                            <div class="text-muted">
+                                <i class="fas fa-list fa-2x mb-3"></i>
+                                <p>No activity logs found.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Pagination -->
+    {% if logs.pages > 1 %}
+    <div class="card-footer">
+        <nav aria-label="Log navigation">
+            <ul class="pagination justify-content-center mb-0">
+                {% if logs.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('admin.logs', page=logs.prev_num, user=request.args.get('user'), action=request.args.get('action'), date_from=request.args.get('date_from'), date_to=request.args.get('date_to')) }}">
+                        Previous
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Previous</span>
+                </li>
+                {% endif %}
+                
+                {% for page_num in logs.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                    {% if page_num %}
+                        {% if page_num == logs.page %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                        {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.logs', page=page_num, user=request.args.get('user'), action=request.args.get('action'), date_from=request.args.get('date_from'), date_to=request.args.get('date_to')) }}">
+                                {{ page_num }}
+                            </a>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">…</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if logs.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('admin.logs', page=logs.next_num, user=request.args.get('user'), action=request.args.get('action'), date_from=request.args.get('date_from'), date_to=request.args.get('date_to')) }}">
+                        Next
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Next</span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Log Information Card -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">Log Information</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="d-flex">
+                    <div class="flex-shrink-0 text-primary">
+                        <i class="fas fa-info-circle fa-2x"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h5 class="mb-1">About Activity Logs</h5>
+                        <p class="text-muted">Activity logs record actions performed by users within the system, including:</p>
+                        <ul class="mb-0">
+                            <li>User login/logout events</li>
+                            <li>Resource creation/modification/deletion</li>
+                            <li>System configuration changes</li>
+                            <li>Security-related events</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="d-flex">
+                    <div class="flex-shrink-0 text-warning">
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h5 class="mb-1">Log Management</h5>
+                        <p class="text-muted">Important information about logs:</p>
+                        <ul class="mb-0">
+                            <li>Logs are stored in the database and may consume space over time</li>
+                            <li>Clearing logs will permanently delete all log entries</li>
+                            <li>Consider exporting logs periodically for long-term storage</li>
+                            <li>Logs contain IP addresses and detailed user actions for security purposes</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

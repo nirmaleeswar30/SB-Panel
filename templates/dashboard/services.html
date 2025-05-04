@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Services{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h1 class="page-title">Services</h1>
+</div>
+
+<!-- Services Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Manage Services</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Container</th>
+                        <th>Status</th>
+                        <th>Auto-start</th>
+                        <th>Port</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for service in services %}
+                    <tr data-service-id="{{ service.id }}">
+                        <td>{{ service.name }}</td>
+                        <td>{{ service.service_type }}</td>
+                        <td>
+                            {% for container in containers %}
+                                {% if container.id == service.container_id %}
+                                    {{ container.name }}
+                                {% endif %}
+                            {% endfor %}
+                        </td>
+                        <td>
+                            <span id="service-status-{{ service.id }}" class="badge {% if service.status == 'running' %}bg-success{% elif service.status == 'stopped' %}bg-danger{% else %}bg-warning{% endif %}">
+                                {{ service.status }}
+                            </span>
+                        </td>
+                        <td>
+                            <form id="service-toggle-autostart-form-{{ service.id }}" action="{{ url_for('services.toggle_autostart', service_id=service.id) }}" method="post">
+                                <div class="form-check form-switch">
+                                    <input type="checkbox" class="form-check-input" id="service-autostart-{{ service.id }}" {% if service.auto_start %}checked{% endif %} onchange="toggleAutostart('{{ service.id }}')">
+                                    <label class="form-check-label" for="service-autostart-{{ service.id }}">
+                                        {{ 'Enabled' if service.auto_start else 'Disabled' }}
+                                    </label>
+                                </div>
+                            </form>
+                        </td>
+                        <td>{{ service.port or 'N/A' }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <form id="service-start-form-{{ service.id }}" action="{{ url_for('services.start', service_id=service.id) }}" method="post" class="d-inline">
+                                    <button id="service-start-btn-{{ service.id }}" type="button" class="btn btn-outline-success {% if service.status == 'running' %}disabled{% endif %}" onclick="handleServiceAction('start', '{{ service.id }}', '{{ service.name }}')" title="Start Service">
+                                        <i class="fas fa-play"></i>
+                                    </button>
+                                </form>
+                                <form id="service-stop-form-{{ service.id }}" action="{{ url_for('services.stop', service_id=service.id) }}" method="post" class="d-inline">
+                                    <button id="service-stop-btn-{{ service.id }}" type="button" class="btn btn-outline-danger {% if service.status == 'stopped' %}disabled{% endif %}" onclick="handleServiceAction('stop', '{{ service.id }}', '{{ service.name }}')" title="Stop Service">
+                                        <i class="fas fa-stop"></i>
+                                    </button>
+                                </form>
+                                <form id="service-restart-form-{{ service.id }}" action="{{ url_for('services.restart', service_id=service.id) }}" method="post" class="d-inline">
+                                    <button id="service-restart-btn-{{ service.id }}" type="button" class="btn btn-outline-warning {% if service.status == 'stopped' %}disabled{% endif %}" onclick="handleServiceAction('restart', '{{ service.id }}', '{{ service.name }}')" title="Restart Service">
+                                        <i class="fas fa-sync"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <div class="text-muted">
+                                <i class="fas fa-cogs fa-2x mb-3"></i>
+                                <p>No services found.</p>
+                                <p>Services are automatically created when you create containers, websites, and databases.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Service Information Card -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">Service Management Information</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="d-flex">
+                    <div class="flex-shrink-0 text-primary">
+                        <i class="fas fa-info-circle fa-2x"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h5 class="mb-1">Service Types</h5>
+                        <p class="text-muted">Various services can be managed:</p>
+                        <ul class="mb-0">
+                            <li><strong>Web:</strong> NGINX, Apache</li>
+                            <li><strong>Database:</strong> MySQL, MariaDB</li>
+                            <li><strong>Cache:</strong> Redis, Memcached</li>
+                            <li><strong>Search:</strong> ElasticSearch</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex">
+                    <div class="flex-shrink-0 text-success">
+                        <i class="fas fa-power-off fa-2x"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h5 class="mb-1">Service Control</h5>
+                        <p class="text-muted">Manage service state:</p>
+                        <ul class="mb-0">
+                            <li><strong>Start:</strong> Begin running a stopped service</li>
+                            <li><strong>Stop:</strong> Halt a running service</li>
+                            <li><strong>Restart:</strong> Stop and start again</li>
+                            <li><strong>Auto-start:</strong> Start when container starts</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex">
+                    <div class="flex-shrink-0 text-warning">
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h5 class="mb-1">Important Notes</h5>
+                        <p class="text-muted">Keep in mind:</p>
+                        <ul class="mb-0">
+                            <li>Stopping a web server will make websites unavailable</li>
+                            <li>Stopping a database will interrupt applications</li>
+                            <li>Disabled auto-start services must be started manually after container restart</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/services.js"></script>
+{% endblock %}
