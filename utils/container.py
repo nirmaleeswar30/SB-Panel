@@ -68,24 +68,28 @@ class MockLXDClient:
         self._containers = {}
     
     def containers(self):
-        return self
-        
-    def get(self, container_id):
-        if container_id in self._containers:
-            return self._containers[container_id]
-        
-        # Create mock container if it doesn't exist
-        container = MockContainer(container_id)
-        self._containers[container_id] = container
-        return container
-        
-    def all(self):
-        return list(self._containers.values())
-        
-    def create(self, config, wait=False):
-        container = MockContainer(config['name'], config)
-        self._containers[config['name']] = container
-        return container
+        class ContainerList:
+            def __init__(self, container_dict):
+                self._containers = container_dict
+                
+            def all(self):
+                return list(self._containers.values())
+                
+            def get(self, container_id):
+                if container_id in self._containers:
+                    return self._containers[container_id]
+                
+                # Create mock container if it doesn't exist
+                container = MockContainer(container_id)
+                self._containers[container_id] = container
+                return container
+            
+            def create(self, config, wait=False):
+                container = MockContainer(config['name'], config)
+                self._containers[config['name']] = container
+                return container
+                
+        return ContainerList(self._containers)
 
 # Mock client for development
 client = MockLXDClient()
