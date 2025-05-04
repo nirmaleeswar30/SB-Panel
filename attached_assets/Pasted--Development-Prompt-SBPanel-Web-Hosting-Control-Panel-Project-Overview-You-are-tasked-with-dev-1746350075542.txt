@@ -1,0 +1,343 @@
+# Development Prompt: SBPanel Web Hosting Control Panel
+
+## Project Overview
+You are tasked with developing SBPanel, a comprehensive web hosting control panel for Linux systems. SBPanel provides users with isolated environments similar to VPS experiences but at a fraction of the cost. The panel will enable users to run multiple PHP versions, modify server configurations, manage domains, restart services, and perform other advanced tasks within their isolated environment.
+
+## Architecture Overview
+SBPanel has the following architecture:
+- Internet traffic is routed through a firewall
+- Main NGINX server handles incoming connections
+- OpenPanel serves as the control panel interface
+- Each user gets an isolated environment with:
+  - Choice of web servers (NGINX, Apache, OpenResty, Varnish)
+  - Programming languages (PHP, Python, Node.js)
+  - Database options (MySQL, MariaDB)
+  - Caching solutions (REDIS, Memcached)
+  - Search capabilities (ElasticSearch)
+  - SSH access
+
+## Key Features
+- User isolation with resource limiting
+- Multiple web server support (NGINX, Apache, OpenResty, Varnish)
+- Multiple database support (MySQL, MariaDB)
+- Multiple PHP version support
+- WordPress management tools
+- REDIS and Memcached object caching
+- Automatic SSL certificate generation and renewal
+- On-demand service starting (resources used only when needed)
+- Google PageSpeed data integration
+- DNS zone export
+- Cronjob management with pause capability
+- Website suspension functionality
+- Daily usage reports for administrators
+- Comments for DNS records
+- File Manager with URL download capability
+- Favorites system for pages
+- Session management and sharing
+- Detailed activity logging
+- Custom admin messages per user
+
+## Development Tasks
+
+### Phase 1: Infrastructure Setup
+
+#### Task 1: Base System Configuration
+1. Select a Linux distribution (Ubuntu Server or CentOS recommended)
+2. Set up the base server with:
+   - Firewall configuration (UFW or firewalld)
+   - SSH hardening
+   - System updates and security patches
+   - Network configuration
+
+#### Task 2: Containerization System
+1. Install and configure LXD/LXC for user environment isolation
+2. Create base container templates for:
+   - NGINX environment
+   - Apache environment
+   - Mixed environment with essential services
+3. Configure resource limiting mechanisms (CPU, RAM, disk)
+4. Implement network isolation for containers
+5. Set up storage volumes for user data
+
+#### Task 3: Core Services Installation
+1. Install and configure:
+   - NGINX for the main server
+   - MariaDB/MySQL for the panel database
+   - PHP-FPM for the control panel
+   - Redis for session management
+   - Let's Encrypt client for SSL
+2. Set up service monitoring and auto-restart capabilities
+
+### Phase 2: User Isolation and Management
+
+#### Task 4: User Management System
+1. Design the database schema for user accounts
+2. Implement user creation/modification/deletion logic
+3. Develop user authentication system with:
+   - Password policies
+   - Two-factor authentication option
+   - Session management
+4. Create user permission system with role-based access control
+5. Implement user resource quota management
+
+#### Task 5: Container Management System
+1. Develop container provisioning system for new users
+2. Create container template management
+3. Implement container lifecycle management (start/stop/restart)
+4. Develop container resource monitoring
+5. Implement container backup and restore functionality
+
+#### Task 6: Service Provisioning System
+1. Create service installation and configuration templates for:
+   - Web servers (NGINX, Apache, OpenResty, Varnish)
+   - Database servers (MySQL, MariaDB)
+   - PHP versions (5.6, 7.x, 8.x)
+   - Node.js
+   - Python environments
+   - Redis and Memcached
+   - ElasticSearch
+2. Implement service management API
+3. Develop service configuration file generators
+4. Create service monitoring and health checks
+
+### Phase 3: Control Panel Backend
+
+#### Task 7: Core API Development
+1. Design RESTful API architecture
+2. Implement API authentication and authorization
+3. Create API endpoints for:
+   - User management
+   - Container management
+   - Service management
+   - Website management
+   - Database management
+   - DNS management
+   - File management
+   - Cron job management
+   - SSL certificate management
+4. Implement input validation and error handling
+5. Develop API documentation
+
+#### Task 8: Website Management System
+1. Create domain management logic
+2. Implement virtual host configuration generation
+3. Develop SSL certificate issuance and renewal automation
+4. Create website statistics collection system
+5. Implement website suspension and resumption functionality
+6. Develop Google PageSpeed integration
+
+#### Task 9: Database Management System
+1. Create database and user provisioning logic
+2. Implement database backup and restore functionality
+3. Develop database monitoring system
+4. Create remote access management
+5. Implement database optimization tools
+
+#### Task 10: DNS Management System
+1. Develop DNS zone management
+2. Implement record creation with comment support
+3. Create zone template system
+4. Implement DNS propagation checking
+5. Develop DNS zone export functionality
+
+### Phase 4: Control Panel Frontend
+
+#### Task 11: Admin Panel Interface
+1. Design admin dashboard layout
+2. Implement user management interface
+3. Create system configuration panels
+4. Develop monitoring and statistics displays
+5. Implement server management tools
+6. Create backup and restore interface
+7. Develop custom message system for users
+
+#### Task 12: User Panel Interface
+1. Design user dashboard with resource usage displays
+2. Create website management interface
+3. Develop database management tools
+4. Implement file manager with:
+   - File editing capabilities
+   - Upload/download functionality
+   - URL download feature
+   - Permission management
+5. Create DNS management interface
+6. Implement cron job management with pause feature
+7. Develop service control panels
+8. Create WordPress management tools
+9. Implement favorites system for pages
+10. Develop terminal access interface
+
+### Phase 5: Advanced Features
+
+#### Task 13: WordPress Manager
+1. Create WordPress installation automation
+2. Implement plugin and theme management
+3. Develop WordPress update system
+4. Create WordPress security scanning
+5. Implement WordPress backup and restore
+6. Develop WordPress staging environment creation
+
+#### Task 14: Terminal and SSH Access
+1. Develop web-based terminal interface
+2. Implement SSH key management
+3. Create terminal session recording
+4. Develop terminal session sharing functionality
+5. Implement terminal access controls
+
+#### Task 15: Backup System
+1. Create automated backup scheduling
+2. Implement backup storage management
+3. Develop backup rotation policies
+4. Create backup verification system
+5. Implement backup restoration tools
+
+### Phase 6: Testing and Security
+
+#### Task 16: Security Implementation
+1. Conduct security audit of the codebase
+2. Implement:
+   - Input validation
+   - Output sanitization
+   - CSRF protection
+   - XSS prevention
+   - SQL injection protection
+3. Create security update mechanism
+4. Implement intrusion detection
+5. Develop security notification system
+
+#### Task 17: Testing
+1. Create unit tests for core functions
+2. Implement integration tests for key workflows
+3. Develop performance testing suite
+4. Create security testing procedures
+5. Design user acceptance testing plan
+
+### Phase 7: Documentation and Deployment
+
+#### Task 18: Documentation
+1. Create installation documentation
+2. Develop administrator manual
+3. Write user guide
+4. Create API documentation
+5. Develop troubleshooting guide
+
+#### Task 19: Deployment System
+1. Create automated installation script
+2. Develop update mechanism
+3. Implement migration tools for existing hosting environments
+4. Create backup strategy
+5. Develop disaster recovery procedures
+
+## Development Guidelines
+
+### Technology Stack
+- **Backend Language**: PHP or Python for the control panel
+- **Frontend**: HTML5, CSS3, JavaScript with a modern framework (Vue.js or React)
+- **Database**: MariaDB/MySQL
+- **Containerization**: LXC/LXD or Docker
+- **Web Server**: NGINX for the main server
+- **Authentication**: JWT or session-based
+
+### Development Practices
+1. Follow object-oriented programming principles
+2. Implement proper error handling and logging
+3. Use a version control system (Git)
+4. Document all code and APIs
+5. Follow security best practices
+6. Implement automated testing
+7. Use configuration files for customizable settings
+
+### Security Considerations
+1. Always validate and sanitize user input
+2. Implement proper authentication and authorization
+3. Use secure communication (HTTPS)
+4. Follow the principle of least privilege
+5. Implement resource limiting to prevent abuse
+6. Regularly update dependencies
+7. Conduct security audits
+
+## Implementation Details for Key Components
+
+### User Isolation
+The core of SBPanel is the user isolation system. Each user should have:
+- A dedicated container or set of containers
+- Resource limits (CPU, RAM, disk space)
+- Isolated network namespace
+- Dedicated services (web server, database, etc.)
+- Separate SSH access
+
+Implement this using LXC/LXD containers or Docker with proper resource limits and network isolation.
+
+### Website Management
+For each website, the system should:
+1. Create the appropriate web server configuration
+2. Set up the document root directory
+3. Configure PHP version if needed
+4. Issue and install SSL certificates
+5. Set up DNS records
+6. Implement monitoring and statistics collection
+
+### Database Management
+For database management, implement:
+1. Database server provisioning in user containers
+2. Database and user creation tools
+3. Backup and restore functionality
+4. Performance monitoring and optimization tools
+5. Remote access configuration
+
+### WordPress Management
+The WordPress Manager should:
+1. Automate WordPress installation
+2. Manage plugins and themes
+3. Handle updates securely
+4. Implement security scanning
+5. Provide backup and restore functionality
+6. Create staging environments
+
+### Service Management
+The service management system should:
+1. Allow users to install and configure services
+2. Provide service start/stop/restart functionality
+3. Monitor service health
+4. Automatically start services when needed
+5. Implement service configuration management
+
+## Deliverables
+
+### Documentation
+1. Installation guide
+2. Administrator manual
+3. User guide
+4. API documentation
+5. Troubleshooting guide
+
+### Source Code
+1. Complete source code with comments
+2. Database schema
+3. Configuration files
+4. Installation scripts
+
+### Deployment Package
+1. Installation script
+2. Update mechanism
+3. Migration tools
+4. Backup and restore utilities
+
+## Development Timeline
+1. **Phase 1**: Infrastructure setup (Weeks 1-2)
+2. **Phase 2**: User isolation and management (Weeks 3-5)
+3. **Phase 3**: Control panel backend (Weeks 6-10)
+4. **Phase 4**: Control panel frontend (Weeks 11-14)
+5. **Phase 5**: Advanced features (Weeks 15-18)
+6. **Phase 6**: Testing and security (Weeks 19-20)
+7. **Phase 7**: Documentation and deployment (Weeks 21-22)
+
+## Evaluation Criteria
+The final product will be evaluated based on:
+1. Functionality - All features work as specified
+2. Security - The system is secure against common threats
+3. Performance - The system performs well under load
+4. Usability - The interface is intuitive and easy to use
+5. Documentation - Complete and accurate documentation is provided
+6. Code quality - The code is well-structured, commented, and maintainable
+7. Scalability - The system can scale to handle many users and websites
