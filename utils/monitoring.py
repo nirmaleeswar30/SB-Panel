@@ -83,13 +83,24 @@ def get_user_resources(user_id):
             'total_cpu_allocated': total_cpu_allocated,
             'total_memory_allocated': total_memory_allocated,
             'total_disk_allocated': total_disk_allocated,
-            'cpu_limit': user.cpu_limit,
-            'memory_limit': user.memory_limit,
-            'disk_limit': user.disk_limit,
-            'cpu_percent': min(cpu_percent, 100),
-            'memory_percent': min(memory_percent, 100),
-            'disk_percent': min(disk_percent, 100),
-            'active_containers': Container.query.filter_by(user_id=user_id, status='running').count()
+            'active_containers': Container.query.filter_by(user_id=user_id, status='running').count(),
+            
+            # Format the resources to match the template's expected structure
+            'cpu': {
+                'used': total_cpu_allocated,
+                'limit': user.cpu_limit,
+                'percent': min(cpu_percent, 100)
+            },
+            'memory': {
+                'used': total_memory_allocated * 1024 * 1024,  # Convert MB to bytes for filesizeformat filter
+                'limit': user.memory_limit * 1024 * 1024,      # Convert MB to bytes for filesizeformat filter
+                'percent': min(memory_percent, 100)
+            },
+            'disk': {
+                'used': total_disk_allocated * 1024 * 1024,    # Convert MB to bytes for filesizeformat filter
+                'limit': user.disk_limit * 1024 * 1024,        # Convert MB to bytes for filesizeformat filter
+                'percent': min(disk_percent, 100)
+            }
         }
         return stats
     except Exception as e:
@@ -102,13 +113,22 @@ def get_user_resources(user_id):
             'total_cpu_allocated': 0,
             'total_memory_allocated': 0,
             'total_disk_allocated': 0,
-            'cpu_limit': 0,
-            'memory_limit': 0,
-            'disk_limit': 0,
-            'cpu_percent': 0,
-            'memory_percent': 0,
-            'disk_percent': 0,
-            'active_containers': 0
+            'active_containers': 0,
+            'cpu': {
+                'used': 0,
+                'limit': 1,
+                'percent': 0
+            },
+            'memory': {
+                'used': 0,
+                'limit': 1024 * 1024 * 1024,  # 1GB in bytes
+                'percent': 0
+            },
+            'disk': {
+                'used': 0,
+                'limit': 10 * 1024 * 1024 * 1024,  # 10GB in bytes
+                'percent': 0
+            }
         }
 
 def get_containers_status():
