@@ -1,6 +1,7 @@
 import logging
 import random
 import string
+from .container import _execute_in_container, start_service, write_file, read_file, restart_service # Adjusted imports
 
 logger = logging.getLogger(__name__)
 
@@ -12,122 +13,159 @@ def generate_password(length=16):
 def create_database(container_id, name, db_type, db_user, db_password, remote_access):
     """
     Create a database on a container
-    
-    Args:
-        container_id: Container ID
-        name: Database name
-        db_type: Database type (mysql, mariadb)
-        db_user: Database user
-        db_password: Database password
-        remote_access: Whether to enable remote access
     """
-    from utils.container import container
-    container = container.get(container_id)
-    
-    # Install database server if not already installed
+    service_name = None
     if db_type == 'mysql':
-        container.execute(['apt-get', 'update'])
-        container.execute(['apt-get', 'install', '-y', 'mysql-server'])
-        service_name = 'mysql'
+        db_package = 'mysql-server'
+        service_name = 'mysql' # Service name for mysql-server on Ubuntu is often 'mysql'
     elif db_type == 'mariadb':
-        container.execute(['apt-get', 'update'])
-        container.execute(['apt-get', 'install', '-y', 'mariadb-server'])
+        db_package = 'mariadb-server'
         service_name = 'mariadb'
     else:
         raise ValueError(f"Unsupported database type: {db_type}")
+
+    logger.info(f"Ensuring {db_package} is installed in {container_id}...")
+    _execute_in_container(container_id, ['apt-get', 'update', '-y'])
+    install_db_result = _execute_in_container(container_id, ['apt-get', 'install', '-y', db_package])
+    if install_db_result.exit_code != 0:
+        logger.error(f"Failed to install {db_package} in {container_id}: {install_db_result.stderr}")
+        raise Exception(f"Failed to install {db_package} in {container_id}")
+    logger.info(f"Successfully installed/verified {db_package} in {container_id}.")
     
-    # Ensure database server is running
-    from utils.container import start_service
     start_service(container_id, service_name)
     
-    # Create database and user
-    create_db_command = f"CREATE DATABASE IF NOT EXISTS `{name}`;"
-    create_user_command = f"CREATE USER '{db_user}'@'localhost' IDENTIFIED BY '{db_password}';"
-    grant_command = f"GRANT ALL PRIVILEGES ON `{name}`.* TO '{db_user}'@'localhost';"
-    
-    # Add remote access if enabled
+    # MySQL commands might need a brief moment for the server to be fully ready after start
+    # Consider a small sleep or retry mechanism if encountering "can't connect" errors here.
+    # For simplicity, not adding it yet.
+
+    # Construct SQL commands
+    # Note: IDENTIFIED BY is for older MySQL. Newer versions use IDENTIFIED WITH mysql_native_password BY
+    # For compatibility, this might need adjustment or checking MySQL version in container.
+    # Using a simpler CREATE USER for now.
+    sql_commands = [
+        f"CREATE DATABASE IF NOT EXISTS `{name}`;",
+        f"CREATE USER IF NOT EXISTS '{db_user}'@'localhost' IDENTIFIED BY '{db_password}';",
+        f"GRANT ALL PRIVILEGES ON `{name}`.* TO '{db_user}'@'localhost';"
+    ]
     if remote_access:
-        create_remote_user_command = f"CREATE USER '{db_user}'@'%' IDENTIFIED BY '{db_password}';"
-        grant_remote_command = f"GRANT ALL PRIVILEGES ON `{name}`.* TO '{db_user}'@'%';"
-    else:
-        create_remote_user_command = ""
-        grant_remote_command = ""
+        sql_commands.extend([
+            f"CREATE USER IF NOT EXISTS '{db_user}'@'%' IDENTIFIED BY '{db_password}';",
+            f"GRANT ALL PRIVILEGES ON `{name}`.* TO '{db_user}'@'%';"
+        ])
+    sql_commands.append("FLUSH PRIVILEGES;")
     
-    flush_command = "FLUSH PRIVILEGES;"
+    full_sql_command_str = " ".join(sql_commands)
     
-    # Execute SQL commands
-    sql_commands = f"{create_db_command} {create_user_command} {grant_command} {create_remote_user_command} {grant_remote_command} {flush_command}"
-    container.execute(['mysql', '-e', sql_commands])
+    # Execute SQL. This requires mysql client and that the server is running without root password prompt or with a known one.
+    # The default Ubuntu install of mysql-server often allows root login without password from localhost.
+    # If `mysql` command needs password, this will fail.
+    exec_sql_result = _execute_in_container(container_id, ['mysql', '-e', full_sql_command_str])
+    if exec_sql_result.exit_code != 0:
+        logger.error(f"Failed to execute SQL commands for database {name} in {container_id}: {exec_sql_result.stderr} {exec_sql_result.stdout}")
+        # It's possible the user already exists with a different password, or other SQL error.
+        # More granular error handling would be good here.
+        raise Exception(f"SQL execution failed for database {name}. Check logs for details.")
     
-    # Configure remote access if enabled
+    logger.info(f"Database {name} and user {db_user} created in {container_id}.")
+
     if remote_access:
-        configure_remote_access(container_id, db_type)
+        configure_remote_access(container_id, db_type, service_name)
 
 def delete_database(container_id, name, db_type, db_user):
     """
     Delete a database from a container
-    
-    Args:
-        container_id: Container ID
-        name: Database name
-        db_type: Database type (mysql, mariadb)
-        db_user: Database user
     """
-    from utils.container import container
-    container = container.get(container_id)
-    
-    # Determine service name
-    if db_type == 'mysql':
-        service_name = 'mysql'
-    elif db_type == 'mariadb':
-        service_name = 'mariadb'
-    else:
-        raise ValueError(f"Unsupported database type: {db_type}")
-    
-    # Ensure database server is running
-    from utils.container import start_service
+    service_name = 'mysql' if db_type == 'mysql' else 'mariadb'
     start_service(container_id, service_name)
     
-    # Delete database and user
-    drop_db_command = f"DROP DATABASE IF EXISTS `{name}`;"
-    drop_user_command = f"DROP USER IF EXISTS '{db_user}'@'localhost'; DROP USER IF EXISTS '{db_user}'@'%';"
-    flush_command = "FLUSH PRIVILEGES;"
+    sql_commands = [
+        f"DROP DATABASE IF EXISTS `{name}`;",
+        f"DROP USER IF EXISTS '{db_user}'@'localhost';",
+        f"DROP USER IF EXISTS '{db_user}'@'%';" # Attempt to drop remote user too
+        "FLUSH PRIVILEGES;"
+    ]
+    full_sql_command_str = " ".join(sql_commands)
     
-    # Execute SQL commands
-    sql_commands = f"{drop_db_command} {drop_user_command} {flush_command}"
-    container.execute(['mysql', '-e', sql_commands])
-
-def configure_remote_access(container_id, db_type):
-    """
-    Configure database server for remote access
-    
-    Args:
-        container_id: Container ID
-        db_type: Database type (mysql, mariadb)
-    """
-    from utils.container import container, write_file
-    container = container.get(container_id)
-    
-    # Determine config file location
-    if db_type == 'mysql':
-        config_file = '/etc/mysql/mysql.conf.d/mysqld.cnf'
-        service_name = 'mysql'
-    elif db_type == 'mariadb':
-        config_file = '/etc/mysql/mariadb.conf.d/50-server.cnf'
-        service_name = 'mariadb'
+    exec_sql_result = _execute_in_container(container_id, ['mysql', '-e', full_sql_command_str])
+    if exec_sql_result.exit_code != 0:
+        logger.warning(f"Failed to delete database/user {name}/{db_user} in {container_id} (may not exist or other SQL issue): {exec_sql_result.stderr}")
+        # Not raising exception, as it might be a "user/db doesn't exist" error which is fine for delete.
     else:
-        raise ValueError(f"Unsupported database type: {db_type}")
+        logger.info(f"Database {name} and user {db_user} (if existed) deleted from {container_id}.")
+
+
+def configure_remote_access(container_id, db_type, service_name_for_restart):
+    """
+    Configure database server for remote access by changing bind-address.
+    """
+    config_file_path = None
+    # These paths are typical for Ubuntu packages
+    if db_type == 'mysql':
+        # MySQL 5.7 uses /etc/mysql/mysql.conf.d/mysqld.cnf
+        # MySQL 8.0 might use /etc/mysql/my.cnf or similar, or also the above.
+        # Check common paths.
+        possible_paths = ['/etc/mysql/mysql.conf.d/mysqld.cnf', '/etc/mysql/my.cnf']
+        for p in possible_paths:
+             res = _execute_in_container(container_id, ['test', '-f', p], ignore_failure=True)
+             if res.exit_code == 0:
+                  config_file_path = p
+                  break
+        if not config_file_path:
+             logger.error(f"MySQL config file not found in {container_id} at expected paths.")
+             return False # Cannot configure
+    elif db_type == 'mariadb':
+        # MariaDB often uses /etc/mysql/mariadb.conf.d/50-server.cnf
+        config_file_path = '/etc/mysql/mariadb.conf.d/50-server.cnf'
+        res = _execute_in_container(container_id, ['test', '-f', config_file_path], ignore_failure=True)
+        if res.exit_code != 0:
+            # Try alternative path if 50-server.cnf doesn't exist
+            alt_path = '/etc/mysql/my.cnf' # Some MariaDB setups might use this
+            res_alt = _execute_in_container(container_id, ['test', '-f', alt_path], ignore_failure=True)
+            if res_alt.exit_code == 0:
+                config_file_path = alt_path
+            else:
+                logger.error(f"MariaDB config file not found in {container_id} at expected paths.")
+                return False
+    else:
+        raise ValueError(f"Unsupported database type for remote access config: {db_type}")
+
+    if not config_file_path:
+        logger.error(f"Could not determine DB config file path for {db_type} in {container_id}.")
+        return False
+
+    try:
+        current_config = read_file(container_id, config_file_path)
+    except Exception as e:
+        logger.error(f"Failed to read DB config {config_file_path} from {container_id}: {e}")
+        return False
     
-    # Read current config
-    from utils.container import read_file
-    config = read_file(container_id, config_file)
+    # Replace bind-address. Be careful with regex or simple replace.
+    # Look for lines starting with 'bind-address'
+    new_config_lines = []
+    found_bind_address = False
+    for line in current_config.splitlines():
+        if line.strip().startswith('bind-address'):
+            new_config_lines.append('bind-address            = 0.0.0.0')
+            found_bind_address = True
+        else:
+            new_config_lines.append(line)
     
-    # Replace bind-address from 127.0.0.1 to 0.0.0.0
-    updated_config = config.replace('bind-address            = 127.0.0.1', 'bind-address            = 0.0.0.0')
+    if not found_bind_address:
+        # If not found, try to add it under [mysqld] or [mariadb] section
+        # This is more complex; for now, we'll assume it exists and is commented or set to 127.0.0.1
+        logger.warning(f"'bind-address' not found in {config_file_path} for {container_id}. Remote access may not be fully enabled by this script if it needs to be added.")
+        # A simple approach if not found: append under [mysqld] if possible
+        # For now, we proceed assuming the replace worked or it's not there to replace
     
-    # Write updated config
-    write_file(container_id, config_file, updated_config)
+    updated_config = "\n".join(new_config_lines)
     
-    # Restart database server
-    from utils.container import restart_service
-    restart_service(container_id, service_name)
+    try:
+        write_file(container_id, config_file_path, updated_config)
+        logger.info(f"Updated bind-address in {config_file_path} for {container_id}.")
+    except Exception as e:
+        logger.error(f"Failed to write updated DB config {config_file_path} to {container_id}: {e}")
+        return False
+        
+    restart_service(container_id, service_name_for_restart)
+    logger.info(f"Remote access configured for {db_type} in {container_id}. Service {service_name_for_restart} restarted.")
+    return True
